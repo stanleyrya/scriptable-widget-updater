@@ -1,5 +1,3 @@
-const DEBUG = true
-
 const scripts = [{
     name: 'interest-map',
     raw: 'https://raw.githubusercontent.com/bring-larry-to-life/scriptable-widget-interest-map/main/widget.js',
