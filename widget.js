@@ -13,28 +13,40 @@ const scripts = [{
 }]
 
 async function update() {
-  let results = {
-      "updated": 0,
-      "failed": 0,
-      "off": 0
-  };
-  for (const script of scripts) {
-    if (script.storedParameters) {
-        const writeSuccess = writeStoredParameters(script.name, script.storedParameters)
-        console.log("Attempted to write parameters for script. Success?: " + writeSuccess);
+    let results = {
+        "updated": 0,
+        "failed": 0,
+        "off": 0
+    };
+
+    for (const script of scripts) {
+      try {
+          const turnedOnAndDownloaded = await processScript(script);
+          
+          if (turnedOnAndDownloaded) {
+              results.updated++;
+          } else {
+              results.off++;
+          }
+      } catch (err) {
+          console.error(err);
+          results.failed++
+      }
     }
-    const scriptResults = await download(script);
-    
-    if (scriptResults.updated) { results.updated++; }
-    if (scriptResults.failed) { results.failed++; }
-    if (scriptResults.off) { results.off++; }
-  }
-  return results;
+
+    return results;
+}
+
+async function processScript(script) {
+    if (script.storedParameters) {
+        writeStoredParameters(script.name, script.storedParameters)
+    }
+
+    return await download(script);
 }
 
 /**
  * Attempts to write the file ./storage/name.json
- * Returns false if it cannot be written.
  */
 function writeStoredParameters(name, params) {
     let fm = FileManager.local()
@@ -48,73 +60,61 @@ function writeStoredParameters(name, params) {
         console.log("Storage folder does not exist! Creating now.");
         fm.createDirectory(storageDir);
     } else if (!fm.isDirectory(storageDir)) {
-        console.error("Storage folder exists but is not a directory!");
-        return false;
+        throw("Storage folder exists but is not a directory!");
     }
 
     if (fm.fileExists(parameterPath) && fm.isDirectory(parameterPath)) {
-        console.error("Parameter file is a directory, please delete!");
-        return false;
+        throw("Parameter file is a directory, please delete!");
     }
 
     fm.writeString(parameterPath, JSON.stringify(params))
-
-    return true;
 }
 
 /**
- * Downloads script using different logic depending on the type.
+ * Downloads script using different logic depending on the type. Returns true if updated, false if turned off.
  *
- * @param {{type: string, name: string, raw: string, forceDownload: bool}} script 
- * results: { "updated": true, "failed": true, "off": true }
+ * @param {{type: string, name: string, raw: string, forceDownload: bool}} script
  */
 async function download(script) {
     switch(script.type) {
         case 'raw':
             return await downloadScript(script);
         default:
-            console.error("Cant interpret type. Not downloading file.");
-            return { "failed": true };
+            throw("Can't interpret type. Not downloading file.");
     }
 }
 
 /**
- * Downloads script file if forced or not yet existing.
+ * Downloads script file if forced or not yet existing. Returns true if updated, false if turned off.
  *
- * @param {{name: string, raw: string, forceDownload: bool}} script 
- * results: { "updated": true, "failed": true, "off": true }
+ * @param {{name: string, raw: string, forceDownload: bool}} script
  */
 async function downloadScript(script) {
-    try {
-        let fm = FileManager.local()
-    
-        let thisScriptPath = module.filename;
-        let scriptDirectory = thisScriptPath.replace(fm.fileName(thisScriptPath, true), '');
-        let scriptFilename = script.name + '.js';
-        let path = fm.joinPath(scriptDirectory, scriptFilename);
-        let forceDownload = (script.forceDownload) ? script.forceDownload : false;
-    
-        console.log("thisScriptPath: " + thisScriptPath)
-        console.log("scriptDirectory: " + scriptDirectory)
-        console.log("scriptFilename: " + scriptFilename)
-        console.log("path: " + path)
-        console.log("forceDownload: " + forceDownload)
-    
-        if (fm.fileExists(path) && !forceDownload) {
-            console.log("Not downloading script");
-            return { "off": true }
-        } else {
-            console.log("Downloading script '" + script.raw + "' to '" + path + "'")
-            const req = new Request(script.raw)
-            let scriptFile = await req.load()
-            fm.write(path, scriptFile)
-        }
-    
-        return { "updated": true };
-    } catch (err) {
-        console.error(err);
-        return { "failed": true };
+    let fm = FileManager.local()
+
+    let thisScriptPath = module.filename;
+    let scriptDirectory = thisScriptPath.replace(fm.fileName(thisScriptPath, true), '');
+    let scriptFilename = script.name + '.js';
+    let path = fm.joinPath(scriptDirectory, scriptFilename);
+    let forceDownload = (script.forceDownload) ? script.forceDownload : false;
+
+    console.log("thisScriptPath: " + thisScriptPath)
+    console.log("scriptDirectory: " + scriptDirectory)
+    console.log("scriptFilename: " + scriptFilename)
+    console.log("path: " + path)
+    console.log("forceDownload: " + forceDownload)
+
+    if (fm.fileExists(path) && !forceDownload) {
+        console.log("Not downloading script");
+        return false;
+    } else {
+        console.log("Downloading script '" + script.raw + "' to '" + path + "'")
+        const req = new Request(script.raw)
+        let scriptFile = await req.load()
+        fm.write(path, scriptFile)
     }
+
+    return true;
 }
 
 // Takes in an object that describes the update script's results:
