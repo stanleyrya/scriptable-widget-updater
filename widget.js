@@ -21,9 +21,7 @@ async function update() {
 
     for (const script of scripts) {
       try {
-          const turnedOnAndDownloaded = await processScript(script);
-          
-          if (turnedOnAndDownloaded) {
+          if (await processScript(script)) {
               results.updated++;
           } else {
               results.off++;
@@ -49,12 +47,9 @@ async function processScript(script) {
  * Attempts to write the file ./storage/name.json
  */
 function writeStoredParameters(name, params) {
-    let fm = FileManager.local()
-
-    const thisScriptPath = module.filename
-    const storageDir = thisScriptPath.replace(fm.fileName(thisScriptPath, true), '') + "storage"
-    const parameterFile = name + ".json";
-    const parameterPath = storageDir + "/" + parameterFile;
+    const fm = FileManager.local();
+    const storageDir = getCurrentDir() + "storage";
+    const parameterPath = storageDir + "/" + name + ".json";
 
     if (!fm.fileExists(storageDir)) {
         console.log("Storage folder does not exist! Creating now.");
@@ -67,7 +62,7 @@ function writeStoredParameters(name, params) {
         throw("Parameter file is a directory, please delete!");
     }
 
-    fm.writeString(parameterPath, JSON.stringify(params))
+    fm.writeString(parameterPath, JSON.stringify(params));
 }
 
 /**
@@ -90,22 +85,12 @@ async function download(script) {
  * @param {{name: string, raw: string, forceDownload: bool}} script
  */
 async function downloadScript(script) {
-    let fm = FileManager.local()
-
-    let thisScriptPath = module.filename;
-    let scriptDirectory = thisScriptPath.replace(fm.fileName(thisScriptPath, true), '');
-    let scriptFilename = script.name + '.js';
-    let path = fm.joinPath(scriptDirectory, scriptFilename);
-    let forceDownload = (script.forceDownload) ? script.forceDownload : false;
-
-    console.log("thisScriptPath: " + thisScriptPath)
-    console.log("scriptDirectory: " + scriptDirectory)
-    console.log("scriptFilename: " + scriptFilename)
-    console.log("path: " + path)
-    console.log("forceDownload: " + forceDownload)
+    const fm = FileManager.local()
+    const path = fm.joinPath(getCurrentDir(), script.name + '.js');
+    const forceDownload = (script.forceDownload) ? script.forceDownload : false;
 
     if (fm.fileExists(path) && !forceDownload) {
-        console.log("Not downloading script");
+        console.log("Not downloading script " + script.name);
         return false;
     } else {
         console.log("Downloading script '" + script.raw + "' to '" + path + "'")
@@ -115,6 +100,12 @@ async function downloadScript(script) {
     }
 
     return true;
+}
+
+function getCurrentDir() {
+    const fm = FileManager.local()
+    const thisScriptPath = module.filename;
+    return thisScriptPath.replace(fm.fileName(thisScriptPath, true), '');
 }
 
 // Takes in an object that describes the update script's results:
@@ -128,12 +119,12 @@ async function createWidget(results) {
     gradient.colors = [startColor, endColor];
     gradient.locations = [0.25, 1];
     widget.backgroundGradient = gradient;
-    widget.backgroundColor = new Color("1c1c1c");
+    widget.backgroundColor = new Color("#301934");
 
     let titleStack = widget.addStack();
     titleStack.layoutHorizontally();
 
-    let titleText = titleStack.addText("Widget Updater");
+    let titleText = titleStack.addText("Script Updater");
     titleText.textColor = Color.white();
     titleText.leftAlignText();
     
