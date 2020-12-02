@@ -10,6 +10,21 @@ const scripts = [{
     raw: 'https://raw.githubusercontent.com/stanleyrya/scriptable-widget-busyness-calendar/main/widget.js',
     forceDownload: false,
     storedParameters: { "monthDiff": 0 }
+}, {
+    type: 'raw',
+    name: 'append-to-performance-metrics',
+    raw: 'https://raw.githubusercontent.com/stanleyrya/scriptable-playground/main/append-to-performance-metrics.js',
+    forceDownload: false
+}, {
+    type: 'raw',
+    name: 'read-write-stored-parameters',
+    raw: 'https://raw.githubusercontent.com/stanleyrya/scriptable-playground/main/read-write-stored-parameters.js',
+    forceDownload: false
+}, {
+    type: 'raw',
+    name: 'reverse-geocode-tests',
+    raw: 'https://raw.githubusercontent.com/stanleyrya/scriptable-playground/main/reverse-geocode-tests.js',
+    forceDownload: false
 }]
 
 async function update() {
