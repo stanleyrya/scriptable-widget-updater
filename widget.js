@@ -9,7 +9,7 @@ const scripts = [{
     name: 'busyness-calendar',
     raw: 'https://raw.githubusercontent.com/stanleyrya/scriptable-widget-busyness-calendar/main/widget.js',
     forceDownload: false,
-    storedParameters: {"monthDiff": -1}
+    storedParameters: {"monthDiff": 0}
 }]
 
 async function update() {
@@ -47,7 +47,7 @@ async function processScript(script) {
  * Attempts to write the file ./storage/name.json
  */
 function writeStoredParameters(name, params) {
-    const fm = FileManager.local();
+    const fm = getFileManager();
     const storageDir = getCurrentDir() + "storage";
     const parameterPath = storageDir + "/" + name + ".json";
 
@@ -85,7 +85,7 @@ async function download(script) {
  * @param {{name: string, raw: string, forceDownload: bool}} script
  */
 async function downloadScript(script) {
-    const fm = FileManager.local()
+    const fm = getFileManager();
     const path = fm.joinPath(getCurrentDir(), script.name + '.js');
     const forceDownload = (script.forceDownload) ? script.forceDownload : false;
 
@@ -102,8 +102,16 @@ async function downloadScript(script) {
     return true;
 }
 
+function getFileManager() {
+    try {
+        return FileManager.iCloud();
+    } catch(e) {
+        return FileManager.local();
+    }
+}
+
 function getCurrentDir() {
-    const fm = FileManager.local()
+    const fm = getFileManager();
     const thisScriptPath = module.filename;
     return thisScriptPath.replace(fm.fileName(thisScriptPath, true), '');
 }
