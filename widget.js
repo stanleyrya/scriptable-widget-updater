@@ -3,13 +3,13 @@ const scripts = [{
     name: 'interest-map',
     raw: 'https://raw.githubusercontent.com/bring-larry-to-life/scriptable-widget-interest-map/main/widget.js',
     forceDownload: false,
-    storedParameters: {"apiKey": "testtest"}
-},{
+    storedParameters: { "apiKey": "testtest" }
+}, {
     type: 'raw',
     name: 'busyness-calendar',
     raw: 'https://raw.githubusercontent.com/stanleyrya/scriptable-widget-busyness-calendar/main/widget.js',
     forceDownload: false,
-    storedParameters: {"monthDiff": 0}
+    storedParameters: { "monthDiff": 0 }
 }]
 
 async function update() {
@@ -20,16 +20,16 @@ async function update() {
     };
 
     for (const script of scripts) {
-      try {
-          if (await processScript(script)) {
-              results.updated++;
-          } else {
-              results.off++;
-          }
-      } catch (err) {
-          console.error(err);
-          results.failed++
-      }
+        try {
+            if (await processScript(script)) {
+                results.updated++;
+            } else {
+                results.off++;
+            }
+        } catch (err) {
+            console.error(err);
+            results.failed++
+        }
     }
 
     return results;
@@ -44,7 +44,7 @@ async function processScript(script) {
 }
 
 /**
- * Attempts to write the file ./storage/name.json
+ * Attempts to write parameters to the file ./storage/name.json
  */
 function writeStoredParameters(name, params) {
     const fm = getFileManager();
@@ -55,11 +55,11 @@ function writeStoredParameters(name, params) {
         console.log("Storage folder does not exist! Creating now.");
         fm.createDirectory(storageDir);
     } else if (!fm.isDirectory(storageDir)) {
-        throw("Storage folder exists but is not a directory!");
+        throw ("Storage folder exists but is not a directory!");
     }
 
     if (fm.fileExists(parameterPath) && fm.isDirectory(parameterPath)) {
-        throw("Parameter file is a directory, please delete!");
+        throw ("Parameter file is a directory, please delete!");
     }
 
     fm.writeString(parameterPath, JSON.stringify(params));
@@ -71,11 +71,11 @@ function writeStoredParameters(name, params) {
  * @param {{type: string, name: string, raw: string, forceDownload: bool}} script
  */
 async function download(script) {
-    switch(script.type) {
-        case 'raw':
-            return await downloadScript(script);
-        default:
-            throw("Can't interpret type. Not downloading file.");
+    switch (script.type) {
+    case 'raw':
+        return await downloadScript(script);
+    default:
+        throw ("Can't interpret type. Not downloading file.");
     }
 }
 
@@ -105,7 +105,7 @@ async function downloadScript(script) {
 function getFileManager() {
     try {
         return FileManager.iCloud();
-    } catch(e) {
+    } catch (e) {
         return FileManager.local();
     }
 }
@@ -116,8 +116,11 @@ function getCurrentDir() {
     return thisScriptPath.replace(fm.fileName(thisScriptPath, true), '');
 }
 
-// Takes in an object that describes the update script's results:
-// { "updated": 3, "failed": 4, "off": 1 }
+/**
+ * Displays the results of the updater script in widget format.
+ *
+ * @param {{ "updated": 3, "failed": 4, "off": 1 }} results
+ */
 async function createWidget(results) {
     let widget = new ListWidget();
 
@@ -135,13 +138,13 @@ async function createWidget(results) {
     let titleText = titleStack.addText("Script Updater");
     titleText.textColor = Color.white();
     titleText.leftAlignText();
-    
+
     titleStack.addSpacer();
-    
+
     let iconText = titleStack.addText("📲");
     iconText.font = Font.largeTitle();
     iconText.leftAlignText();
-    
+
     widget.addSpacer();
 
     if (results.updated) {
@@ -174,16 +177,16 @@ function writeLine(widget, text) {
 
 async function run(params) {
     const results = await update();
-	if (config.runsInWidget) {
-	    const widget = await createWidget(results)
-	    Script.setWidget(widget)
-	    Script.complete()
+    if (config.runsInWidget) {
+        const widget = await createWidget(results)
+        Script.setWidget(widget)
+        Script.complete()
 
-	// Useful for loading widget and seeing logs manually
     } else {
-	    const widget = await createWidget(results)
-	    await widget.presentSmall()
-	}
+        // Useful for loading widget and seeing logs manually
+        const widget = await createWidget(results)
+        await widget.presentSmall()
+    }
 }
 
 await run();
